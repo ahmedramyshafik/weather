@@ -30,8 +30,9 @@
       min-height: 100vh;
       margin: 0;
       padding: 48px 20px;
-      display: grid;
-      place-items: start center;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
       color: var(--ink);
       background:
         radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--accent) 15%, transparent), transparent 42rem),
@@ -40,10 +41,22 @@
       transition: background-color .25s ease, color .25s ease;
     }
 
-    .app { width: min(100%, 520px); }
+    .app { 
+      width: min(100%, 520px); 
+      margin: 0 auto;
+    }
     .topline { display: flex; justify-content: space-between; align-items: center; margin: 0 2px 18px; }
     .brand { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 750; letter-spacing: -.02em; }
     .brand-mark { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 9px; color: #fff; background: var(--accent); font-size: 16px; }
+    
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .unit-toggle { display: flex; background: var(--line); padding: 2px; border-radius: 8px; gap: 2px; }
+    .unit-btn {
+      border: 0; background: transparent; color: var(--muted); padding: 4px 8px;
+      font-size: 12px; font-weight: 700; border-radius: 6px; cursor: pointer; transition: all .15s ease;
+    }
+    .unit-btn.active { background: var(--surface-solid); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+
     .live { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
     .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #46b982; box-shadow: 0 0 0 3px color-mix(in srgb, #46b982 17%, transparent); }
 
@@ -85,6 +98,24 @@
     .detail-label { color: var(--muted); font-size: 11px; }
     .detail-value { font-size: 14px; font-weight: 700; }
 
+    /* Hourly Forecast Strip */
+    .hourly-section { padding: 18px 22px 10px; border-bottom: 1px solid var(--line); }
+    .hourly-title { font-size: 13px; font-weight: 750; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 12px; }
+    .hourly-strip {
+      display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px;
+      scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+    }
+    .hourly-strip::-webkit-scrollbar { height: 4px; }
+    .hourly-strip::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+    .hourly-card {
+      flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 10px 12px; border-radius: 14px; background: var(--surface-solid); border: 1px solid var(--line); min-width: 62px;
+    }
+    .hourly-time { font-size: 11px; font-weight: 650; color: var(--muted); }
+    .hourly-icon { font-size: 20px; line-height: 1; }
+    .hourly-temp { font-size: 13px; font-weight: 700; }
+    .hourly-rain { font-size: 10px; color: #5797d3; min-height: 12px; font-weight: 600; }
+
     .forecast { padding: 21px 22px 22px; background: color-mix(in srgb, var(--surface-solid) 56%, transparent); }
     .forecast-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
     .forecast h2 { margin: 0; font-size: 15px; font-weight: 750; letter-spacing: -.02em; }
@@ -96,9 +127,7 @@
     .day-temp { font-size: 12px; font-weight: 700; white-space: nowrap; }
     .day-temp span { margin-left: 4px; color: var(--muted); font-weight: 500; }
     .day-rain { min-height: 13px; margin-top: 6px; color: #5797d3; font-size: 10px; }
-    .footer { display: flex; justify-content: space-between; gap: 12px; padding: 13px 3px 0; color: var(--muted); font-size: 11px; }
-    .footer a { color: inherit; text-decoration: none; }
-    .footer a:hover { color: var(--ink); }
+    
     .message { min-height: 16px; margin: 10px 2px 0; color: var(--muted); font-size: 12px; }
     .message.error { color: #c15555; }
     .loading .temp-value, .loading .weather-art { opacity: .5; }
@@ -135,7 +164,13 @@
   <main class="app">
     <div class="topline">
       <div class="brand"><span class="brand-mark" aria-hidden="true">☼</span>daylight</div>
-      <div class="live"><span class="live-dot" aria-hidden="true"></span><span id="source-status">Connecting to live weather</span></div>
+      <div class="header-actions">
+        <div class="unit-toggle" role="radiogroup" aria-label="Temperature unit">
+          <button class="unit-btn active" id="btn-c" onclick="setUnit('C')">°C</button>
+          <button class="unit-btn" id="btn-f" onclick="setUnit('F')">°F</button>
+        </div>
+        <div class="live"><span class="live-dot" aria-hidden="true"></span><span id="source-status">Connecting</span></div>
+      </div>
     </div>
     <section class="panel" aria-label="Weather forecast">
       <div class="main" id="weather-panel">
@@ -169,8 +204,15 @@
           <div class="detail"><span class="detail-label">Wind</span><span class="detail-value" id="wind">— km/h</span></div>
         </div>
       </div>
+
+      <!-- 24-Hour Forecast Strip -->
+      <div class="hourly-section">
+        <div class="hourly-title">24-Hour Forecast</div>
+        <div class="hourly-strip" id="hourly-strip"></div>
+      </div>
+
       <div class="forecast">
-        <div class="forecast-head"><h2>5-day forecast</h2><span class="unit-label">Temperature · °C</span></div>
+        <div class="forecast-head"><h2>5-day forecast</h2><span class="unit-label" id="unit-label">Temperature · °C</span></div>
         <div class="days" id="forecast-days" aria-live="polite"></div>
       </div>
     </section>
@@ -178,6 +220,9 @@
   </main>
   <script>
     const $ = (id) => document.getElementById(id);
+    let currentUnit = 'C';
+    let rawWeatherData = null;
+
     const conditions = {
       0: ["Clear sky", "☀️", "#efa935", "#fff1d9"],
       1: ["Mostly clear", "🌤️", "#efa935", "#fff1d9"],
@@ -213,39 +258,85 @@
       return conditions[code] || ["Variable conditions", "🌤️", "#efa935", "#fff1d9"];
     }
 
+    function formatTemp(tempC) {
+      if (tempC === undefined || tempC === null) return "—";
+      const temp = currentUnit === 'F' ? (tempC * 9/5) + 32 : tempC;
+      return Math.round(temp);
+    }
+
+    function setUnit(unit) {
+      currentUnit = unit;
+      $("btn-c").classList.toggle("active", unit === 'C');
+      $("btn-f").classList.toggle("active", unit === 'F');
+      $("unit-label").textContent = `Temperature · °${unit}`;
+      if (rawWeatherData) showForecast(rawWeatherData);
+    }
+
     function showForecast(data) {
+      rawWeatherData = data;
       const current = data.current;
       const daily = data.daily;
+      const hourly = data.hourly;
+
       const [label, icon, accent, soft] = condition(current.weather_code);
       document.documentElement.style.setProperty("--accent", accent);
       document.documentElement.style.setProperty("--accent-soft", soft);
+      
       $("condition-text").textContent = label;
       $("condition-icon").textContent = icon;
       $("weather-art").textContent = icon;
-      $("temperature").textContent = Math.round(current.temperature_2m);
-      $("feels-like").textContent = `${Math.round(current.apparent_temperature)}°`;
+      $("temperature").textContent = formatTemp(current.temperature_2m);
+      $("feels-like").textContent = `${formatTemp(current.apparent_temperature)}°`;
       $("humidity").textContent = `${Math.round(current.relative_humidity_2m)}%`;
       $("wind").textContent = `${Math.round(current.wind_speed_10m)} km/h`;
-      $("today-high").textContent = `${Math.round(daily.temperature_2m_max[0])}°`;
-      $("today-low").textContent = `${Math.round(daily.temperature_2m_min[0])}°`;
+      $("today-high").textContent = `${formatTemp(daily.temperature_2m_max[0])}°`;
+      $("today-low").textContent = `${formatTemp(daily.temperature_2m_min[0])}°`;
 
+      // 24-Hour Forecast (Time-zone aligned)
+      if (hourly && hourly.time) {
+        const timeFormatter = new Intl.DateTimeFormat("en", { hour: "numeric", timeZone: data.timezone });
+        const localHourStr = new Intl.DateTimeFormat("en-CA", {
+          year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23", timeZone: data.timezone
+        }).format(new Date()).replace(", ", "T").slice(0, 13) + ":00";
+
+        let startIndex = hourly.time.findIndex(t => t.startsWith(localHourStr));
+        if (startIndex === -1) startIndex = 0;
+
+        const next24Times = hourly.time.slice(startIndex, startIndex + 24);
+
+        $("hourly-strip").innerHTML = next24Times.map((timeStr, i) => {
+          const idx = startIndex + i;
+          const [, hIcon] = condition(hourly.weather_code[idx]);
+          const dateObj = new Date(timeStr + ":00Z");
+          const timeLabel = i === 0 ? "Now" : timeFormatter.format(dateObj);
+          const rainProb = hourly.precipitation_probability?.[idx] || 0;
+          
+          return `<div class="hourly-card">
+            <span class="hourly-time">${timeLabel}</span>
+            <span class="hourly-icon">${hIcon}</span>
+            <span class="hourly-temp">${formatTemp(hourly.temperature_2m[idx])}°</span>
+            <span class="hourly-rain">${rainProb > 0 ? `💧${rainProb}%` : ''}</span>
+          </div>`;
+        }).join("");
+      }
+
+      // 5-Day Forecast
       const formatter = new Intl.DateTimeFormat("en", { weekday: "short", timeZone: data.timezone });
       $("forecast-days").innerHTML = daily.time.slice(0, 5).map((date, index) => {
         const [dayLabel, dayIcon] = condition(daily.weather_code[index]);
         const day = index === 0 ? "Today" : formatter.format(new Date(`${date}T12:00:00`));
         const rain = daily.precipitation_probability_max?.[index];
-        return `<article class="day" aria-label="${day}: ${dayLabel}, high ${Math.round(daily.temperature_2m_max[index])} degrees, low ${Math.round(daily.temperature_2m_min[index])} degrees">
-          <div class="day-name">${day}</div><div class="day-icon" aria-hidden="true">${dayIcon}</div>
-          <div class="day-temp">${Math.round(daily.temperature_2m_max[index])}°<span>${Math.round(daily.temperature_2m_min[index])}°</span></div>
+        return `<article class="day" aria-label="${day}: ${dayLabel}">
+          <div class="day-name">${day}</div>
+          <div class="day-icon" aria-hidden="true">${dayIcon}</div>
+          <div class="day-temp">${formatTemp(daily.temperature_2m_max[index])}°<span>${formatTemp(daily.temperature_2m_min[index])}°</span></div>
           <div class="day-rain">${rain > 0 ? `💧 ${rain}%` : "&nbsp;"}</div>
         </article>`;
       }).join("");
+
       $("current-date").textContent = new Intl.DateTimeFormat("en", {
         weekday: "long", month: "long", day: "numeric", timeZone: data.timezone
       }).format(new Date());
-      $("updated-at").textContent = `Updated ${new Intl.DateTimeFormat("en", {
-        hour: "numeric", minute: "2-digit", timeZone: data.timezone
-      }).format(new Date())}`;
     }
 
     function fallbackWeather() {
@@ -254,9 +345,22 @@
         date.setDate(date.getDate() + i);
         return date.toISOString().slice(0, 10);
       });
+
+      const hourlyTimes = Array.from({ length: 48 }, (_, i) => {
+        const d = new Date();
+        d.setHours(d.getHours() + i);
+        return d.toISOString().slice(0, 13) + ":00";
+      });
+
       return {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Tokyo",
         current: { temperature_2m: 22, apparent_temperature: 23, relative_humidity_2m: 58, wind_speed_10m: 12, weather_code: 1 },
+        hourly: {
+          time: hourlyTimes,
+          temperature_2m: Array.from({ length: 48 }, (_, i) => 20 + Math.sin(i / 3) * 4),
+          weather_code: Array.from({ length: 48 }, () => 1),
+          precipitation_probability: Array.from({ length: 48 }, (_, i) => (i % 5 === 0 ? 20 : 0))
+        },
         daily: {
           time: dates, weather_code: [1, 2, 0, 3, 61],
           temperature_2m_max: [24, 23, 25, 21, 19], temperature_2m_min: [17, 16, 18, 15, 14],
@@ -271,11 +375,13 @@
       $("weather-panel").classList.add("loading");
       $("message").className = "message";
       $("message").textContent = "";
-      $("source-status").textContent = "Connecting to live weather";
+      $("source-status").textContent = "Connecting";
       try {
         const endpoint = new URL("https://api.open-meteo.com/v1/forecast");
         endpoint.search = new URLSearchParams({
-          latitude, longitude, current: "temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m",
+          latitude, longitude,
+          current: "temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m",
+          hourly: "temperature_2m,weather_code,precipitation_probability",
           daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
           timezone: "auto", forecast_days: "5"
         });
@@ -285,14 +391,14 @@
         if (requestId !== activeRequest) return;
         $("city-name").textContent = name;
         showForecast(data);
-        $("source-status").textContent = "Live weather";
+        $("source-status").textContent = "Live";
       } catch (error) {
         if (requestId !== activeRequest) return;
         $("city-name").textContent = name;
         showForecast(fallbackWeather());
-        $("source-status").textContent = "Offline forecast";
+        $("source-status").textContent = "Offline";
         $("message").className = "message";
-        $("message").textContent = "Live weather is unavailable, so a sample forecast is shown.";
+        $("message").textContent = "Live weather is unavailable, showing sample forecast.";
       } finally {
         if (requestId === activeRequest) $("weather-panel").classList.remove("loading");
       }
@@ -307,39 +413,41 @@
         const endpoint = new URL("https://geocoding-api.open-meteo.com/v1/search");
         endpoint.search = new URLSearchParams({ name: query, count: "1", language: "en", format: "json" });
         const response = await fetch(endpoint);
-        if (!response.ok) throw new Error("City search is unavailable");
+        if (!response.ok) throw new Error("City search unavailable");
         const result = await response.json();
         if (requestId !== activeRequest) return;
-        if (!result.results?.length) throw new Error(`No city found for “${query}”. Try another name.`);
+        if (!result.results?.length) throw new Error(`No city found for “${query}”.`);
         const city = result.results[0];
         const name = [city.name, city.admin1, city.country].filter((part, index, list) => part && list.indexOf(part) === index).join(", ");
         await loadCity(name, city.latitude, city.longitude);
       } catch (error) {
         if (requestId !== activeRequest) return;
-        $("source-status").textContent = "Search unavailable";
+        $("source-status").textContent = "Error";
         $("message").className = "message error";
-        $("message").textContent = error.message || "Could not find that city. Please try again.";
+        $("message").textContent = error.message || "Could not find that city.";
         $("weather-panel").classList.remove("loading");
       }
     }
 
-    $("search-form").addEventListener("submit", (event) => {
-      event.preventDefault();
-      const query = $("city-input").value.trim();
-      if (query) searchCity(query);
-    });
+    document.addEventListener("DOMContentLoaded", () => {
+      $("search-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const query = $("city-input").value.trim();
+        if (query) searchCity(query);
+      });
 
-    const today = new Date();
-    const tokyoDates = Array.from({ length: 5 }, (_, i) => {
-      const date = new Date(today);
-      date.setDate(date.getDate() + i);
-      return date.toISOString().slice(0, 10);
+      const today = new Date();
+      const tokyoDates = Array.from({ length: 5 }, (_, i) => {
+        const date = new Date(today);
+        date.setDate(date.getDate() + i);
+        return date.toISOString().slice(0, 10);
+      });
+      const initialData = fallbackWeather();
+      initialData.timezone = "Asia/Tokyo";
+      initialData.daily.time = tokyoDates;
+      showForecast(initialData);
+      loadCity("Tokyo", 35.6895, 139.6917);
     });
-    const initialData = fallbackWeather();
-    initialData.timezone = "Asia/Tokyo";
-    initialData.daily.time = tokyoDates;
-    showForecast(initialData);
-    loadCity("Tokyo", 35.6895, 139.6917);
   </script>
 </body>
 </html>
