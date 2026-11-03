@@ -226,38 +226,40 @@
     let rawWeatherData = null;
 
     const conditions = {
-      0: ["Clear sky", "☀️", "#efa935", "#fff1d9"],
-      1: ["Mostly clear", "🌤️", "#efa935", "#fff1d9"],
-      2: ["Partly cloudy", "⛅", "#e7a544", "#fff0df"],
-      3: ["Overcast", "☁️", "#8c9db1", "#e9eef5"],
-      45: ["Fog", "🌫️", "#8c9db1", "#e9eef5"],
-      48: ["Rime fog", "🌫️", "#8c9db1", "#e9eef5"],
-      51: ["Light drizzle", "🌦️", "#5a9bd2", "#e4f2ff"],
-      53: ["Drizzle", "🌦️", "#5a9bd2", "#e4f2ff"],
-      55: ["Dense drizzle", "🌧️", "#4d89c3", "#e3effb"],
-      56: ["Freezing drizzle", "🌧️", "#4d89c3", "#e3effb"],
-      57: ["Freezing drizzle", "🌧️", "#4d89c3", "#e3effb"],
-      61: ["Light rain", "🌦️", "#4e95d2", "#e4f2ff"],
-      63: ["Rain", "🌧️", "#4e95d2", "#e4f2ff"],
-      65: ["Heavy rain", "🌧️", "#397bb5", "#e1effc"],
-      66: ["Freezing rain", "🌧️", "#397bb5", "#e1effc"],
-      67: ["Freezing rain", "🌧️", "#397bb5", "#e1effc"],
-      71: ["Light snow", "🌨️", "#779fc6", "#eaf3fb"],
-      73: ["Snow", "❄️", "#779fc6", "#eaf3fb"],
-      75: ["Heavy snow", "❄️", "#779fc6", "#eaf3fb"],
-      77: ["Snow grains", "🌨️", "#779fc6", "#eaf3fb"],
-      80: ["Rain showers", "🌦️", "#4e95d2", "#e4f2ff"],
-      81: ["Rain showers", "🌧️", "#4e95d2", "#e4f2ff"],
-      82: ["Heavy showers", "🌧️", "#397bb5", "#e1effc"],
-      85: ["Snow showers", "🌨️", "#779fc6", "#eaf3fb"],
-      86: ["Heavy snow showers", "❄️", "#779fc6", "#eaf3fb"],
-      95: ["Thunderstorm", "⛈️", "#8273c7", "#eeeafd"],
-      96: ["Thunderstorm", "⛈️", "#8273c7", "#eeeafd"],
-      99: ["Thunderstorm", "⛈️", "#8273c7", "#eeeafd"]
+      0: ["Clear sky", "☀️", "🌙", "#efa935", "#fff1d9"],
+      1: ["Mostly clear", "🌤️", "🌙", "#efa935", "#fff1d9"],
+      2: ["Partly cloudy", "⛅", "☁️", "#e7a544", "#fff0df"],
+      3: ["Overcast", "☁️", "☁️", "#8c9db1", "#e9eef5"],
+      45: ["Fog", "🌫️", "🌫️", "#8c9db1", "#e9eef5"],
+      48: ["Rime fog", "🌫️", "🌫️", "#8c9db1", "#e9eef5"],
+      51: ["Light drizzle", "🌦️", "🌧️", "#5a9bd2", "#e4f2ff"],
+      53: ["Drizzle", "🌦️", "🌧️", "#5a9bd2", "#e4f2ff"],
+      55: ["Dense drizzle", "🌧️", "🌧️", "#4d89c3", "#e3effb"],
+      56: ["Freezing drizzle", "🌧️", "🌧️", "#4d89c3", "#e3effb"],
+      57: ["Freezing drizzle", "🌧️", "🌧️", "#4d89c3", "#e3effb"],
+      61: ["Light rain", "🌦️", "🌧️", "#4e95d2", "#e4f2ff"],
+      63: ["Rain", "🌧️", "🌧️", "#4e95d2", "#e4f2ff"],
+      65: ["Heavy rain", "🌧️", "🌧️", "#397bb5", "#e1effc"],
+      66: ["Freezing rain", "🌧️", "🌧️", "#397bb5", "#e1effc"],
+      67: ["Freezing rain", "🌧️", "🌧️", "#397bb5", "#e1effc"],
+      71: ["Light snow", "🌨️", "🌨️", "#779fc6", "#eaf3fb"],
+      73: ["Snow", "❄️", "❄️", "#779fc6", "#eaf3fb"],
+      75: ["Heavy snow", "❄️", "❄️", "#779fc6", "#eaf3fb"],
+      77: ["Snow grains", "🌨️", "🌨️", "#779fc6", "#eaf3fb"],
+      80: ["Rain showers", "🌦️", "🌧️", "#4e95d2", "#e4f2ff"],
+      81: ["Rain showers", "🌧️", "🌧️", "#4e95d2", "#e4f2ff"],
+      82: ["Heavy showers", "🌧️", "🌧️", "#397bb5", "#e1effc"],
+      85: ["Snow showers", "🌨️", "🌨️", "#779fc6", "#eaf3fb"],
+      86: ["Heavy snow showers", "❄️", "❄️", "#779fc6", "#eaf3fb"],
+      95: ["Thunderstorm", "⛈️", "⛈️", "#8273c7", "#eeeafd"],
+      96: ["Thunderstorm", "⛈️", "⛈️", "#8273c7", "#eeeafd"],
+      99: ["Thunderstorm", "⛈️", "⛈️", "#8273c7", "#eeeafd"]
     };
 
-    function condition(code) {
-      return conditions[code] || ["Variable conditions", "🌤️", "#efa935", "#fff1d9"];
+    function condition(code, isDay = 1) {
+      const match = conditions[code];
+      if (!match) return ["Variable conditions", isDay ? "🌤️" : "🌙", "#efa935", "#fff1d9"];
+      return [match[0], isDay ? match[1] : match[2], match[3], match[4]];
     }
 
     function formatTemp(tempC) {
@@ -274,13 +276,28 @@
       if (rawWeatherData) showForecast(rawWeatherData);
     }
 
+    function parseLocalISO(isoStr) {
+      const [datePart, timePart] = isoStr.split("T");
+      const [year, month, day] = datePart.split("-").map(Number);
+      const [hour, minute] = (timePart || "00:00").split(":").map(Number);
+      return new Date(year, month - 1, day, hour, minute);
+    }
+
+    function formatHour12(date) {
+      let h = date.getHours();
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12;
+      h = h ? h : 12;
+      return `${h} ${ampm}`;
+    }
+
     function showForecast(data) {
       rawWeatherData = data;
       const current = data.current;
       const daily = data.daily;
       const hourly = data.hourly;
 
-      const [label, icon, accent, soft] = condition(current.weather_code);
+      const [label, icon, accent, soft] = condition(current.weather_code, current.is_day);
       document.documentElement.style.setProperty("--accent", accent);
       document.documentElement.style.setProperty("--accent-soft", soft);
       
@@ -294,23 +311,22 @@
       $("today-high").textContent = `${formatTemp(daily.temperature_2m_max[0])}°`;
       $("today-low").textContent = `${formatTemp(daily.temperature_2m_min[0])}°`;
 
-      // 24-Hour Forecast (Time-zone aligned)
+      // 24-Hour Forecast
       if (hourly && hourly.time) {
-        const timeFormatter = new Intl.DateTimeFormat("en", { hour: "numeric", timeZone: data.timezone });
-        const localHourStr = new Intl.DateTimeFormat("en-CA", {
-          year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23", timeZone: data.timezone
-        }).format(new Date()).replace(", ", "T").slice(0, 13) + ":00";
-
-        let startIndex = hourly.time.findIndex(t => t.startsWith(localHourStr));
-        if (startIndex === -1) startIndex = 0;
+        let startIndex = 0;
+        if (current.time) {
+          startIndex = hourly.time.findIndex(t => t >= current.time);
+          if (startIndex === -1) startIndex = 0;
+        }
 
         const next24Times = hourly.time.slice(startIndex, startIndex + 24);
 
         $("hourly-strip").innerHTML = next24Times.map((timeStr, i) => {
           const idx = startIndex + i;
-          const [, hIcon] = condition(hourly.weather_code[idx]);
-          const dateObj = new Date(timeStr + ":00Z");
-          const timeLabel = i === 0 ? "Now" : timeFormatter.format(dateObj);
+          const isDay = hourly.is_day ? hourly.is_day[idx] : 1;
+          const [, hIcon] = condition(hourly.weather_code[idx], isDay);
+          const dateObj = parseLocalISO(timeStr);
+          const timeLabel = i === 0 ? "Now" : formatHour12(dateObj);
           const rainProb = hourly.precipitation_probability?.[idx] || 0;
           
           return `<div class="hourly-card">
@@ -323,10 +339,11 @@
       }
 
       // 5-Day Forecast
-      const formatter = new Intl.DateTimeFormat("en", { weekday: "short", timeZone: data.timezone });
-      $("forecast-days").innerHTML = daily.time.slice(0, 5).map((date, index) => {
-        const [dayLabel, dayIcon] = condition(daily.weather_code[index]);
-        const day = index === 0 ? "Today" : formatter.format(new Date(`${date}T12:00:00`));
+      const formatter = new Intl.DateTimeFormat("en", { weekday: "short" });
+      $("forecast-days").innerHTML = daily.time.slice(0, 5).map((dateStr, index) => {
+        const [dayLabel, dayIcon] = condition(daily.weather_code[index], 1);
+        const dateObj = parseLocalISO(`${dateStr}T12:00`);
+        const day = index === 0 ? "Today" : formatter.format(dateObj);
         const rain = daily.precipitation_probability_max?.[index];
         return `<article class="day" aria-label="${day}: ${dayLabel}">
           <div class="day-name">${day}</div>
@@ -336,36 +353,58 @@
         </article>`;
       }).join("");
 
-      $("current-date").textContent = new Intl.DateTimeFormat("en", {
-        weekday: "long", month: "long", day: "numeric", timeZone: data.timezone
-      }).format(new Date());
+      if (current.time) {
+        const currentDateObj = parseLocalISO(current.time);
+        const dayName = new Intl.DateTimeFormat("en", { weekday: "long" }).format(currentDateObj);
+        const monthName = new Intl.DateTimeFormat("en", { month: "long" }).format(currentDateObj);
+        $("current-date").textContent = `${dayName}, ${monthName} ${currentDateObj.getDate()}`;
+      }
     }
 
     function fallbackWeather() {
+      const now = new Date();
       const dates = Array.from({ length: 5 }, (_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() + i);
-        return date.toISOString().slice(0, 10);
+        const d = new Date(now);
+        d.setDate(d.getDate() + i);
+        return d.toISOString().slice(0, 10);
       });
 
       const hourlyTimes = Array.from({ length: 48 }, (_, i) => {
-        const d = new Date();
+        const d = new Date(now);
         d.setHours(d.getHours() + i);
-        return d.toISOString().slice(0, 13) + ":00";
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hour = String(d.getHours()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hour}:00`;
       });
 
       return {
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Tokyo",
-        current: { temperature_2m: 22, apparent_temperature: 23, relative_humidity_2m: 58, wind_speed_10m: 12, weather_code: 1 },
+        timezone: "Asia/Tokyo",
+        current: { 
+          time: hourlyTimes[0],
+          temperature_2m: 22, 
+          apparent_temperature: 23, 
+          relative_humidity_2m: 58, 
+          wind_speed_10m: 12, 
+          weather_code: 1,
+          is_day: 1
+        },
         hourly: {
           time: hourlyTimes,
           temperature_2m: Array.from({ length: 48 }, (_, i) => 20 + Math.sin(i / 3) * 4),
           weather_code: Array.from({ length: 48 }, () => 1),
+          is_day: Array.from({ length: 48 }, (_, i) => {
+            const h = parseInt(hourlyTimes[i].split("T")[1].split(":")[0], 10);
+            return (h >= 6 && h < 18) ? 1 : 0;
+          }),
           precipitation_probability: Array.from({ length: 48 }, (_, i) => (i % 5 === 0 ? 20 : 0))
         },
         daily: {
-          time: dates, weather_code: [1, 2, 0, 3, 61],
-          temperature_2m_max: [24, 23, 25, 21, 19], temperature_2m_min: [17, 16, 18, 15, 14],
+          time: dates, 
+          weather_code: [1, 2, 0, 3, 61],
+          temperature_2m_max: [24, 23, 25, 21, 19], 
+          temperature_2m_min: [17, 16, 18, 15, 14],
           precipitation_probability_max: [10, 20, 0, 15, 65]
         }
       };
@@ -383,7 +422,7 @@
         endpoint.search = new URLSearchParams({
           latitude, longitude,
           current: "temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m",
-          hourly: "temperature_2m,weather_code,precipitation_probability",
+          hourly: "temperature_2m,weather_code,precipitation_probability,is_day",
           daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
           timezone: "auto", forecast_days: "5"
         });
@@ -438,16 +477,7 @@
         if (query) searchCity(query);
       });
 
-      const today = new Date();
-      const tokyoDates = Array.from({ length: 5 }, (_, i) => {
-        const date = new Date(today);
-        date.setDate(date.getDate() + i);
-        return date.toISOString().slice(0, 10);
-      });
-      const initialData = fallbackWeather();
-      initialData.timezone = "Asia/Tokyo";
-      initialData.daily.time = tokyoDates;
-      showForecast(initialData);
+      showForecast(fallbackWeather());
       loadCity("Tokyo", 35.6895, 139.6917);
     });
   </script>
